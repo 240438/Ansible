@@ -1,0 +1,18 @@
+[aws]
+51.112.53.185
+3.29.139.94
+158.252.33.180
+
+[aws:vars]
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+ansible_user=ec2-user
+# ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[droplet]
+3.28.40.39
+158.252.81.167
+
+[droplet:vars]
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+ansible_user=ec2-user
+# ansible_ssh_common_args='-o StrictHostKeyChecking=no'

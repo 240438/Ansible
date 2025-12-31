@@ -1,0 +1,25 @@
+---
+- name: Configure nginx web server
+  hosts: aws
+  become: true
+  tasks:
+  - name: install nginx server
+    yum:
+      name: nginx
+      state: latest
+  
+  - name: start nginx server
+    service:
+      name: nginx
+      state: started
+  
+  # - name: stop nginx server
+  #   service:
+  #     name: nginx
+  #     state: stopped
+
+  # - name: uninstall nginx server
+  #   yum:
+  #     name: nginx
+  #     state: absent
+  
