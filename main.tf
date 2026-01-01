@@ -30,7 +30,7 @@ module "myapp-webserver" {
   subnet_id = module.myapp-subnet.subnet.id
   
   # Loop count
-  count             = 2
+  count             = 1
   # Use count.index to differentiate instances
   instance_suffix   = count.index
 }
