@@ -59,6 +59,10 @@
     debug:
       msg: "Public IP: {{ public_ip.content }}"
 
+  - name: Save public IP as fact
+    set_fact:
+      server_public_ip: "{{ public_ip.content }}"
+
   - name: Generate self-signed SSL certificate
     command: >
       openssl req -x509 -nodes -days 365
@@ -73,5 +77,21 @@
     args:
       creates: /etc/ssl/certs/selfsigned.crt
 
-    
+- name: Deploy Nginx configuration
+  hosts: nginx
+  become: true
+  tasks:
+    - name: Copy nginx.conf template
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+  
     
