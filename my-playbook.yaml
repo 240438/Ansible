@@ -3,18 +3,16 @@
   hosts: nginx
   become: true
   tasks:
-  - name: update repo and cache
+  - name: install nginx and update cache
     yum:
-      name: '*'
-      state: latest
+      name: nginx
+      state: present
       update_cache: yes
 
-  - name: install nginx and openssl
+  - name: install openssl
     yum:
-      name: 
-        - nginx
-        - openssl
-      state: latest
+      name: openssl
+      state: present
   
   - name: start nginx server
     service:
