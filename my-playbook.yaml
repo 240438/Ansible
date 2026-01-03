@@ -1,95 +1,93 @@
 ---
-- name: Configure nginx web server
-  hosts: nginx
+- name: Wait for some time to ensure system readiness
+  hosts: all
+  tasks:
+  - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+    wait_for:
+      port: 22
+      host: "{{ inventory_hostname }}"
+      delay: 10
+      timeout: 300
+    delegate_to: localhost
+
+- name: Configure Docker
+  hosts: all
   become: true
   tasks:
-  - name: install nginx and update cache
+  - name: install docker and update cache
     yum:
-      name: nginx
+      name: docker
       state: present
       update_cache: yes
 
-  - name: install openssl
-    yum:
-      name: openssl
-      state: present
-  
-  - name: start nginx server
-    service:
-      name: nginx
-      state: started
-      enabled: true
-  
-- name: Configure SSL certificates
-  hosts: nginx
+- name: Install Docker Compose
+  hosts: all
   become: true
   tasks:
-  - name: Create SSL private directory
+  - name: create docker cli-plugins directory
     file:
-      path: /etc/ssl/private
-      state: directory
-      mode: '0700'
-
-  - name: Create SSL certs directory
-    file:
-      path: /etc/ssl/certs
+      path: /usr/local/lib/docker/cli-plugins
       state: directory
       mode: '0755'
-
-  - name: Get IMDSv2 token
-    uri:
-      url: "http://169.254.169.254/latest/api/token"
-      method: PUT
-      headers:
-        X-aws-ec2-metadata-token-ttl-seconds: "3600"
-      return_content: yes
-    register: imdsv2_token
-
-  - name: Get current public IP
-    uri:
-      url: "http://169.254.169.254/latest/meta-data/public-ipv4"
-      headers:
-        X-aws-ec2-metadata-token: "{{ imdsv2_token.content }}"
-      return_content: yes
-    register: public_ip
-
-  - name: Show current public IP
-    debug:
-      msg: "Public IP: {{ public_ip.content }}"
-
-  - name: Save public IP as fact
-    set_fact:
-      server_public_ip: "{{ public_ip.content }}"
-
-  - name: Generate self-signed SSL certificate
-    command: >
-      openssl req -x509 -nodes -days 365
-      -newkey rsa:2048
-      -keyout /etc/ssl/private/selfsigned.key 
-      -out /etc/ssl/certs/selfsigned.crt 
-      -subj "/CN={{ public_ip.content }}" 
-      -addext "subjectAltName=IP:{{ public_ip.content }}" 
-      -addext "basicConstraints=CA:FALSE"
-      -addext "keyUsage=digitalSignature,keyEncipherment"
-      -addext "extendedKeyUsage=serverAuth"
-    args:
-      creates: /etc/ssl/certs/selfsigned.crt
-
-- name: Deploy Nginx configuration
-  hosts: nginx
-  become: true
-  tasks:
-    - name: Copy nginx.conf template
-      template:
-        src: templates/nginx.conf.j2
-        dest: /etc/nginx/nginx.conf
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: Restart nginx
-      service:
-        name: nginx
-        state: restarted
   
-    
+  - name: install docker-compose
+    get_url:
+      url: https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64
+      dest: /usr/local/lib/docker/cli-plugins/docker-compose
+      mode: '0755'
+  
+  - name: restart docker service
+    service:
+      name: docker
+      state: restarted
+  
+- name: Adding user to docker group
+  hosts: all
+  become: true
+  vars_files:
+    - project-vars.yaml
+  tasks:
+  - name: add user to docker group
+    user:
+      name: "{{ normal_user }}"
+      groups: docker
+      append: yes
+  
+  - name: reconnect to apply group changes
+    meta: reset_connection
+  
+  - name: verify docker access
+    command: docker ps
+    register: docker_ps
+    changed_when: false
+  
+  - name: display docker ps output
+    debug:
+      var: docker_ps.stdout
+
+  - name: fail if docker is not accessible
+    fail:
+      msg: "Docker is not accessible on this host"
+    when: docker_ps.rc != 0
+
+- name: Deploy Docker Containers
+  hosts: all
+  become: true
+  user: "{{ normal_user }}"
+  vars_files:
+    - project-vars.yaml
+  tasks:
+  - name: check if docker-compose file exists
+    stat: 
+      path: /home/{{ normal_user }}/compose.yaml
+    register: compose_file
+
+  - name: copy docker-compose file
+    copy:
+      src: "{{ docker_compose_file_location }}/compose.yaml"
+      dest: /home/{{ normal_user }}/compose.yaml
+      mode: '0644'
+    when: not compose_file.stat.exists
+  
+  - name: deploy containers using docker-compose
+    command: docker compose up -d

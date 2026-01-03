@@ -1,0 +1,43 @@
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea
+    environment:
+      - DB_TYPE=postgres
+      - DB_HOST=db:5432
+      - DB_NAME=gitea
+      - DB_USER=gitea
+      - DB_PASSWD=gitea
+    restart: always
+    volumes:
+      - gitea:/data
+    ports:
+      - 3000:3000
+    extra_hosts:
+      - "www.jenkins.com:host-gateway"
+    networks:
+      - webnet
+  db:
+    image: postgres:alpine
+    container_name: gitea_db
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD=gitea
+      - POSTGRES_DB=gitea
+    restart: always
+    volumes:
+      - gitea_postgres:/var/lib/postgresql/data
+    expose:
+      - 5432
+    networks:
+      - webnet
+
+volumes:
+  gitea_postgres:
+    name: gitea_postgres
+  gitea:
+    name: gitea
+
+networks:
+  webnet:
+    name: webnet

@@ -1,0 +1,2 @@
+normal_user: ec2-user 
+docker_compose_file_location: /workspaces/Ansible

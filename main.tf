@@ -34,3 +34,27 @@ module "myapp-webserver" {
   # Use count.index to differentiate instances
   instance_suffix   = count.index
 }
+
+resource "null_resource" "configure_server" {
+  triggers = {
+    webserver_public_ips = join(",", [for i in module.myapp-webserver : i.aws_instance.public_ip])
+  }
+
+  depends_on = [module.myapp-webserver]
+
+  provisioner "local-exec" {
+    #command = "echo Webserver IPs for Ansible: ${self.triggers.webserver_public_ips_for_ansible}"
+    # command = <<-EOT
+    #             ansible-playbook -i "$(terraform output -raw webserver_public_ips_for_ansible)," \
+    #             -e "normal_user=ec2-user docker_compose_file_location=/workspace/Ansible" \
+    #             my-playbook.yaml
+    #             EOT
+    command = <<-EOT
+                echo Webserver IPs for Ansible: ${self.triggers.webserver_public_ips}
+                
+                ansible-playbook -i ${self.triggers.webserver_public_ips}, \
+                --private-key "${var.private_key}" --user ec2-user \
+                my-playbook.yaml
+                EOT
+  }
+}
