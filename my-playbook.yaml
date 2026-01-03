@@ -23,6 +23,7 @@
 - name: Install Docker Compose
   hosts: all
   become: true
+  gather_facts: true
   tasks:
   - name: create docker cli-plugins directory
     file:
@@ -32,15 +33,23 @@
   
   - name: install docker-compose
     get_url:
-      url: https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64
+      url: https://github.com/docker/compose/releases/latest/download/docker-compose-linux-{{ lookup('pipe', 'uname -m') }}
       dest: /usr/local/lib/docker/cli-plugins/docker-compose
-      mode: '0755'
-  
+      mode: +x
+
+  - name: View architecture of the system
+    debug:
+      msg: "System architecture of {{ inventory_hostname }} is {{ ansible_facts['architecture'] }}"
+
+  - name: Alternate method to view architecture of the system
+    debug:
+      msg: "System architecture of {{inventory_hostname}} is {{ lookup('pipe', 'uname -m') }}"
+
   - name: restart docker service
     service:
       name: docker
       state: restarted
-  
+    
 - name: Adding user to docker group
   hosts: all
   become: true
@@ -91,3 +100,5 @@
   
   - name: deploy containers using docker-compose
     command: docker compose up -d
+    register: compose_result
+    changed_when: "'Creating' in compose_result.stdout or 'Recreating' in compose_result.stdout"

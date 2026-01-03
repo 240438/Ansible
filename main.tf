@@ -37,7 +37,7 @@ module "myapp-webserver" {
 
 resource "null_resource" "configure_server" {
   triggers = {
-    webserver_public_ips = join(",", [for i in module.myapp-webserver : i.aws_instance.public_ip])
+    webserver_public_ips_for_ansible = join(",", [for i in module.myapp-webserver : i.aws_instance.public_ip])
   }
 
   depends_on = [module.myapp-webserver]
@@ -45,14 +45,15 @@ resource "null_resource" "configure_server" {
   provisioner "local-exec" {
     #command = "echo Webserver IPs for Ansible: ${self.triggers.webserver_public_ips_for_ansible}"
     # command = <<-EOT
-    #             ansible-playbook -i "$(terraform output -raw webserver_public_ips_for_ansible)," \
+    #             ansible-playbook -i "$(terraform output -raw webserver_public_ips)," \
     #             -e "normal_user=ec2-user docker_compose_file_location=/workspace/Ansible" \
+    #             --private-key ~/.ssh/id_ed25519 --user ec2-user \
     #             my-playbook.yaml
     #             EOT
     command = <<-EOT
-                echo Webserver IPs for Ansible: ${self.triggers.webserver_public_ips}
+                echo Webserver IPs for Ansible: ${self.triggers.webserver_public_ips_for_ansible}
                 
-                ansible-playbook -i ${self.triggers.webserver_public_ips}, \
+                ansible-playbook -i ${self.triggers.webserver_public_ips_for_ansible}, \
                 --private-key "${var.private_key}" --user ec2-user \
                 my-playbook.yaml
                 EOT
