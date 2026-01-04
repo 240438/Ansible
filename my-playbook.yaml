@@ -75,10 +75,25 @@
     args:
       creates: /etc/ssl/certs/selfsigned.crt
 
-- name: Deploy Nginx configuration
+- name: Deploy Nginx website and configuration files
   hosts: nginx
   become: true
   tasks:
+    - name: install php-fpm and php-curl
+      yum:
+        name:
+          - php-fpm
+          - php-curl
+        state: present
+
+    - name: Copy website files
+      copy:
+        src: files/index.php
+        dest: /usr/share/nginx/html/index.php
+        owner: nginx
+        group: nginx
+        mode: '0644'  
+
     - name: Copy nginx.conf template
       template:
         src: templates/nginx.conf.j2
@@ -92,4 +107,8 @@
         name: nginx
         state: restarted
   
-    
+    - name: Start and enable php-fpm
+      service:
+        name: php-fpm
+        state: started
+        enabled: true

@@ -35,9 +35,17 @@ http {
 
         location / {
             root /usr/share/nginx/html;
-            index index.html;
+            index index.php index.html index.htm;
     #       proxy_pass http://158.252.94.241:80;
     #       proxy_pass http://backend_servers;
+
+            # 🔴 This block is necessary for Php Website
+            location ~ \.php$ {
+            include fastcgi_params;
+            fastcgi_pass unix:/run/php-fpm/www.sock;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            }
             
         }
     }
