@@ -57,7 +57,7 @@ $public_dns  = $token ? getMetadata("public-hostname", $token) : "N/A";
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Backend Web Server</title>
+    <title>Frontend Web Server</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -85,6 +85,15 @@ $public_dns  = $token ? getMetadata("public-hostname", $token) : "N/A";
             font-weight: bold;
             color: #ffd700;
         }
+        .info a {
+            color: white;           /* same as other values */
+            text-decoration: none;  /* remove underline */
+            font-weight: normal;
+        }
+
+        .info a:hover {
+            text-decoration: underline; /* optional: underline on hover */
+        }
     </style>
 </head>
 <body>
@@ -95,7 +104,10 @@ $public_dns  = $token ? getMetadata("public-hostname", $token) : "N/A";
         <div class="info"><span class="label">Instance ID:</span> <?= htmlspecialchars($instance_id) ?></div>
         <div class="info"><span class="label">Private IP:</span> <?= htmlspecialchars($private_ip) ?></div>
         <div class="info"><span class="label">Public IP:</span> <?= htmlspecialchars($public_ip) ?></div>
-        <div class="info"><span class="label">Public DNS:</span> <?= htmlspecialchars($public_dns) ?></div>
+        <div class="info"><span class="label">Public DNS:</span>
+            <a href="https://<?= htmlspecialchars($public_dns) ?>" target="_blank">
+            https://<?= htmlspecialchars($public_dns) ?></a>
+        </div>
         <div class="info"><span class="label">Deployed:</span> <?= $deployed_date ?></div>
         <div class="info"><span class="label">Status:</span> ✅ Active and Running</div>
         <div class="info"><span class="label">Managed By:</span> Terraform + Ansible</div>
