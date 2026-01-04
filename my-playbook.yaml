@@ -1,6 +1,6 @@
 ---
 - name: Configure nginx web server
-  hosts: nginx
+  hosts: all
   become: true
   tasks:
   - name: install nginx and update cache
@@ -21,7 +21,7 @@
       enabled: true
   
 - name: Configure SSL certificates
-  hosts: nginx
+  hosts: all
   become: true
   tasks:
   - name: Create SSL private directory
@@ -76,7 +76,7 @@
       creates: /etc/ssl/certs/selfsigned.crt
 
 - name: Deploy Nginx website and configuration files
-  hosts: nginx
+  hosts: all
   become: true
   tasks:
     - name: install php-fpm and php-curl

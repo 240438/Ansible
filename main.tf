@@ -35,3 +35,19 @@ module "myapp-webserver" {
   # Use count.index to differentiate instances
   instance_suffix   = count.index
 }
+
+module "myapp-webserver-prod" {
+  source = "./modules/webserver"
+  env_prefix = "prod"
+  instance_type = "t3.nano"
+  availability_zone = var.availability_zone
+  public_key = var.public_key
+  my_ip = local.my_ip
+  vpc_id = aws_vpc.myapp_vpc.id
+  subnet_id = module.myapp-subnet.subnet.id
+  
+  # Loop count
+  count             = 1
+  # Use count.index to differentiate instances
+  instance_suffix   = count.index
+}
