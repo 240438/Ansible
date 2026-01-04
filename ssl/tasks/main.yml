@@ -1,0 +1,46 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for ssl
+- name: Create SSL private directory
+  file:
+    path: /etc/ssl/private
+    state: directory
+    mode: '0700'
+
+- name: Create SSL certs directory
+  file:
+    path: /etc/ssl/certs
+    state: directory
+    mode: '0755'
+
+- name: Get IMDSv2 token
+  uri:
+    url: http://169.254.169.254/latest/api/token
+    method: PUT
+    headers:
+      X-aws-ec2-metadata-token-ttl-seconds: "{{ imdsv2_token_ttl }}"
+    return_content: yes
+  register: imds_token
+
+- name: Get public IP
+  uri:
+    url: http://169.254.169.254/latest/meta-data/public-ipv4
+    headers:
+      X-aws-ec2-metadata-token: "{{ imds_token.content }}"
+    return_content: yes
+  register: public_ip
+
+- name: Save public IP as fact
+  set_fact:
+    server_public_ip: "{{ public_ip.content }}"
+
+- name: Generate self-signed certificate
+  command: >
+    openssl req -x509 -nodes -days {{ ssl_days_valid }}
+    -newkey rsa:2048
+    -keyout /etc/ssl/private/selfsigned.key
+    -out /etc/ssl/certs/selfsigned.crt
+    -subj "/CN={{ server_public_ip }}"
+    -addext "subjectAltName=IP:{{ server_public_ip }}"
+  args:
+    creates: /etc/ssl/certs/selfsigned.crt

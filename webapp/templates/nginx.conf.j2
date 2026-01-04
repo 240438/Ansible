@@ -1,10 +1,10 @@
-user nginx;
-worker_processes auto;
-error_log /var/log/nginx/error.log notice;
+user {{ nginx_user }};
+worker_processes {{ nginx_worker_processes }};
+error_log /var/log/nginx/error.log {{ nginx_error_log_level }};
 pid /run/nginx.pid;
 
 events {
-    worker_connections 1024;
+    worker_connections {{ nginx_worker_connections }};
 }
 
 http {
@@ -30,24 +30,28 @@ http {
     server {
         listen 443 ssl;
         server_name {{ server_public_ip }};
+
         ssl_certificate /etc/ssl/certs/selfsigned.crt;
         ssl_certificate_key /etc/ssl/private/selfsigned.key;
-
+        
         location / {
-            root /usr/share/nginx/html;
-            index index.php index.html index.htm;
+            root {{ web_root }};
+            index {{ web_index_file }} index.html index.htm;
     #       proxy_pass http://158.252.94.241:80;
     #       proxy_pass http://backend_servers;
 
+            location / {
+                try_files $uri $uri/ =404;
+            }
+
             # 🔴 This block is necessary for Php Website
             location ~ \.php$ {
-            include fastcgi_params;
-            fastcgi_pass unix:/run/php-fpm/www.sock;
-            fastcgi_index index.php;
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                include fastcgi_params;
+                fastcgi_pass unix:/run/php-fpm/www.sock;
+                fastcgi_index index.php;
+                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
             }
-            
-        }
+        }    
     }
 
     server {

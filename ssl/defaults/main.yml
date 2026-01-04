@@ -1,0 +1,5 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for ssl
+imdsv2_token_ttl: "3600"   # IMDSv2 token TTL
+ssl_days_valid: 365

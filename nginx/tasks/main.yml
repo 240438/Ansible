@@ -1,0 +1,20 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for nginx
+- name: Install nginx
+  yum:
+    name: nginx
+    state: present
+    update_cache: yes
+  notify: Restart nginx
+
+- name: Install openssl
+  yum:
+    name: openssl
+    state: present
+
+- name: Start and enable nginx
+  service:
+    name: nginx
+    state: started
+    enabled: true
