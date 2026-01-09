@@ -5,6 +5,7 @@ provider "aws" {
 
 resource "aws_vpc" "myapp_vpc" {
   cidr_block = var.vpc_cidr_block
+  enable_dns_hostnames = true
   tags = {
      Name = "${var.env_prefix}-vpc"
   }
